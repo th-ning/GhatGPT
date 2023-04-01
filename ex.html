@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatGPT 示例</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #chatbox {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 从 localStorage 中获取历史记录
+            var history = JSON.parse(localStorage.getItem("history")) || [];
+
+            // 将历史记录显示在聊天框中
+            $.each(history, function (index, value) {
+                var $chatbox = $("#chatbox");
+                $chatbox.append("<p><strong>问题：</strong>" + value.question + "</p>");
+                $chatbox.append("<p><strong>答案：</strong>" + value.answer + "</p>");
+            });
+
+            // 处理提交按钮点击事件
+            $("#submit").click(function () {
+                // 获取用户输入的问题
+                var question = $("#question").val();
+
+                // 将问题添加到聊天框中
+                var $chatbox = $("#chatbox");
+                $chatbox.append("<p><strong>您的问题：</strong>" + question + "</p>");
+
+                // 向 Azure Function 发送请求
+                $.ajax({
+                url: "https://your-azure-function-app.azurewebsites.net/api/your-function-name",
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                data: JSON.stringify({
+                    question: question
+                }),
+                success: function (result) {
+                    // 获取 ChatGPT 返回的答案
+                    var answer = result.answer.trim();
+
+                    // 将答案添加到聊天框中
+                    $chatbox.append("<p><strong>ChatGPT 的回答：</strong>" + answer + "</p>");
+
+                    // 将问题和答案添加到历史记录中
+                    var item = { question: question, answer: answer };
+                    history.push(item);
+                    localStorage.setItem("history", JSON.stringify(history));
+                },
+                error: function (xhr, status, error) {
+                    // 处理错误情况
+                    $chatbox.append("<p><strong>错误：</strong>" + error + "</p>");
+                }
+            });
+
+
+                // 清空文本框
+                $("#question").val("");
+            });
+        });
+    </script>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="mb-4">ChatGPT 示例</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <div id="chatbox" class="shadow"></div>
+                <div class="input-group mb-3">
+                    <input type="text" id="question" class="form-control" placeholder="请输入您的问题" />
+                    <button id="submit" class="btn btn-primary">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    
+    </body>
+    </html>
